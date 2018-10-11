@@ -1,4 +1,5 @@
 import os
+import logging
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -167,7 +168,9 @@ class AutorCrud(CrudAux):
             pk_autor = self.object.id
             url_reverse = reverse('sapl.base:autor_detail',
                                   kwargs={'pk': pk_autor})
+            logger = logging.getLogger(__name__)
             try:
+                logger.info('- Enviando email na edição de Autores.')
                 kwargs = {}
                 user = self.object.user
 
@@ -195,7 +198,8 @@ class AutorCrud(CrudAux):
                 send_mail(assunto, mensagem, remetente, destinatario,
                           fail_silently=False)
             except:
-                print(
+                logger.error('- Erro no envio de email na edição de Autores.')
+                sapl_logger.error(
                     _('Erro no envio de email na edição de Autores.'))
             return url_reverse
 
@@ -217,7 +221,10 @@ class AutorCrud(CrudAux):
             pk_autor = self.object.id
             url_reverse = reverse('sapl.base:autor_detail',
                                   kwargs={'pk': pk_autor})
+            logger = logging.getLogger(__name__)
             try:
+                logger.info('- Enviando email na criação de Autores.')
+
                 kwargs = {}
                 user = self.object.user
 
@@ -247,6 +254,8 @@ class AutorCrud(CrudAux):
             except:
                 print(
                     _('Erro no envio de email na criação de Autores.'))
+                logger.error('- Erro no envio de email na criação de Autores.')
+                    
             return url_reverse
 
 
@@ -281,6 +290,9 @@ class RelatorioPresencaSessaoView(FilterView):
     template_name = 'base/RelatorioPresencaSessao_filter.html'
 
     def get_context_data(self, **kwargs):
+        logger = logging.getLogger(__name__)
+
+
         context = super(RelatorioPresencaSessaoView,
                         self).get_context_data(**kwargs)
         context['title'] = _('Presença dos parlamentares nas sessões')
@@ -332,12 +344,17 @@ class RelatorioPresencaSessaoView(FilterView):
                 'ordemdia_porc': 0
             })
             try:
+                logger.info('Tentando obter presença do parlamentar.')
                 sessao_count = presenca_sessao.get(parlamentar_id=p.id)[1]
             except ObjectDoesNotExist:
+                logger.error('Erro ao obter presença do parlamentar. Definido como 0.')
                 sessao_count = 0
             try:
+                # Presenças de cada Ordem do Dia
+                logger.info('Tentando obter presença de cada Ordem do Dia.')
                 ordemdia_count = presenca_ordem.get(parlamentar_id=p.id)[1]
             except ObjectDoesNotExist:
+                logger.error('Erro ao obter presença de cada Ordem do Dia. Definido como 0.')
                 ordemdia_count = 0
 
             parlamentares_presencas[i].update({
@@ -849,10 +866,14 @@ class CasaLegislativaCrud(CrudAux):
 class HelpTopicView(TemplateView):
 
     def get_template_names(self):
+        logger = logging.getLogger(__name__)
+
         topico = self.kwargs['topic']
         try:
+            logger.info('- Tentando obter template %s.html.' % topico)
             get_template('ajuda/%s.html' % topico)
         except TemplateDoesNotExist:
+            logger.error('- Erro ao obter template %s.html. Template não existe.' % topico)
             raise Http404()
         return ['ajuda/%s.html' % topico]
 
