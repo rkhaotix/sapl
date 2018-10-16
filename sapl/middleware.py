@@ -12,5 +12,3 @@ class SiteMiddleware(object):
 
         request.current_site = current_site
         settings.HOST = request.get_host()
-
-        import pdb; pdb.set_trace()
