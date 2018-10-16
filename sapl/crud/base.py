@@ -745,7 +745,7 @@ class CrudDetailView(PermissionRequiredContainerCrudMixin,
         try:
             self.object = self.model.objects.get(pk=kwargs.get('pk'))
         except Exception as e:
-            logger.error("- " + str(e).)
+            logger.error("- " + str(e))
             raise Http404
         obj = self.crud if hasattr(self, 'crud') else self
         if hasattr(obj, 'model_set') and obj.model_set:
