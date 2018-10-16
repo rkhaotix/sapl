@@ -169,32 +169,32 @@ class CriarProtocoloMateriaView(CreateView):
     template_name = "crud/form.html"
     form_class = MateriaSimplificadaForm
     form_valid_message = _('Matéria cadastrada com sucesso!')
+    logger = logging.getLogger(__name__)
 
     def get_success_url(self, materia):
         return reverse('sapl.materia:materialegislativa_detail', kwargs={
             'pk': materia.pk})
 
     def get_context_data(self, **kwargs):
-        logger = logging.getLogger(__name__)
         context = super(
             CriarProtocoloMateriaView, self).get_context_data(**kwargs)
 
         try:
-            logger.info("- Tentando obter objeto Protocolo.")
+            self.logger.info("- Tentando obter objeto Protocolo.")
             protocolo = Protocolo.objects.get(pk=self.kwargs['pk'])
         except ObjectDoesNotExist:
-            logger.error("- Objeto Protocolo não encontrado.")
+            self.logger.error("- Objeto Protocolo não encontrado.")
             raise Http404()
 
         numero = 1
         try:
-            logger.info("- Tentando obter materias do último ano.")
+            self.logger.info("- Tentando obter materias do último ano.")
             materias_ano = MateriaLegislativa.objects.filter(
                 ano=protocolo.ano,
                 tipo=protocolo.tipo_materia).latest('numero')
             numero = materias_ano.numero + 1
         except ObjectDoesNotExist:
-            logger.error("- Não foram encontradas matérias no último ano. Definido 1 como padrão.")
+            self.logger.error("- Não foram encontradas matérias no último ano. Definido 1 como padrão.")
             pass  # numero ficou com o valor padrão 1 acima
 
         context['form'].fields['tipo'].initial = protocolo.tipo_materia
@@ -207,14 +207,13 @@ class CriarProtocoloMateriaView(CreateView):
         return context
 
     def form_valid(self, form):
-        logger = logging.getLogger(__name__)
         materia = form.save()
 
         try:
-            logger.info("- Tentando obter objeto Procolo.")
+            self.logger.info("- Tentando obter objeto Procolo.")
             protocolo = Protocolo.objects.get(pk=self.kwargs['pk'])
         except ObjectDoesNotExist:
-            logger.error('- Objeto Protocolo não encontrado.')
+            self.logger.error('- Objeto Protocolo não encontrado.')
             raise Http404()
 
         if protocolo.autor:
@@ -541,18 +540,18 @@ class RetornarProposicao(UpdateView):
     model = Proposicao
     fields = ['data_envio', 'descricao' ]
     permission_required = ('materia.detail_proposicao_enviada', )
+    logger = logging.getLogger(__name__)
 
     def dispatch(self, request, *args, **kwargs):
-        logger = logging.getLogger(__name__)
         try:
-            logger.info("Tentando obter objeto Proposicao.")
+            self.logger.info("Tentando obter objeto Proposicao.")
             p = Proposicao.objects.get(id=kwargs['pk'])
         except:
-            logger.error("Objeto Proposicao não encontrado.")
+            self.logger.error("Objeto Proposicao não encontrado.")
             raise Http404()
 
         if p.autor.user != request.user:
-            logger.error("'Usuário sem acesso a esta opção.'")
+            self.logger.error("'Usuário sem acesso a esta opção.'")
             messages.error(
                  request,
                  'Usuário sem acesso a esta opção.' %
@@ -568,6 +567,7 @@ class ConfirmarProposicao(PermissionRequiredForAppCrudMixin, UpdateView):
     template_name = "materia/confirmar_proposicao.html"
     model = Proposicao
     form_class = ConfirmarProposicaoForm, DevolverProposicaoForm
+    logger = logging.getLogger(__name__)
 
     def get_success_url(self):
         msgs = self.object.results['messages']
@@ -579,14 +579,13 @@ class ConfirmarProposicao(PermissionRequiredForAppCrudMixin, UpdateView):
         return self.object.results['url']
 
     def get_object(self, queryset=None):
-        logger = logging.getLogger(__name__)
         try:
             """
             Não deve haver acesso na rotina de confirmação a proposições:
             já recebidas -> data_recebimento != None
             não enviadas -> data_envio == None
             """
-            logger.info("- Tentando obter objeto Proposicao.")
+            self.logger.info("- Tentando obter objeto Proposicao.")
             proposicao = Proposicao.objects.get(pk=self.kwargs['pk'],
                                                 data_envio__isnull=False,
                                                 data_recebimento__isnull=True)
@@ -603,11 +602,11 @@ class ConfirmarProposicao(PermissionRequiredForAppCrudMixin, UpdateView):
             if hasher == 'P%s/%s' % (self.kwargs['hash'], proposicao.pk):
                 self.object = proposicao
         except:
-            logger.error("- Objeto Proposicao não encontrado.")
+            self.logger.error("- Objeto Proposicao não encontrado.")
             raise Http404()
 
         if not self.object:
-            logger.error("- Objeto vazio.")
+            self.logger.error("- Objeto vazio.")
             raise Http404()
 
         return self.object
@@ -723,6 +722,7 @@ class ProposicaoCrud(Crud):
                                'materia.detail_proposicao_devolvida',
                                'materia.detail_proposicao_incorporada')
 
+        logger = logging.getLogger(__name__)
         def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
             context['subnav_template_name'] = ''
@@ -733,7 +733,7 @@ class ProposicaoCrud(Crud):
             return context
 
         def get(self, request, *args, **kwargs):
-            logger = logging.getLogger(__name__)
+            
             action = request.GET.get('action', '')
 
             if not action:
@@ -766,7 +766,7 @@ class ProposicaoCrud(Crud):
                         messages.success(request, _(
                             'Proposição enviada com sucesso.'))
                         try:
-                            logger.info("- Tentando obter objeto MateriaLegislativa.")
+                            self.logger.info("- Tentando obter objeto MateriaLegislativa.")
                             numero = MateriaLegislativa.objects.filter(tipo=p.tipo.tipo_conteudo_related,
                                                                        ano=p.ano).last().numero + 1
                             messages.success(request, _(
@@ -774,13 +774,13 @@ class ProposicaoCrud(Crud):
                                 'número que pode não corresponder com a realidade'
                                 % (p.tipo, numero, p.ano)))
                         except ValueError as e:
-                            logger.error("- " + str(e))
+                            self.logger.error("- " + str(e))
                             pass
                         except AttributeError as e:
-                            logger.error("- " + str(e))
+                            self.logger.error("- " + str(e))
                             pass
                         except TypeError as e:
-                            logger.error("- " + str(e))
+                            self.logger.error("- " + str(e))
                             pass
 
                 elif action == 'return':
@@ -808,12 +808,11 @@ class ProposicaoCrud(Crud):
                                     kwargs={'pk': kwargs['pk']}))
 
         def dispatch(self, request, *args, **kwargs):
-            logger = logging.getLogger(__name__)
             try:
-                logger.info("- Tentando obter objeto Proposicao")
+                self.logger.info("- Tentando obter objeto Proposicao")
                 p = Proposicao.objects.get(id=kwargs['pk'])
             except:
-                logger.error("- Erro ao obter proposicao. Retornando 404.")
+                self.logger.error("- Erro ao obter proposicao. Retornando 404.")
                 raise Http404()
 
             if not self.has_permission():
@@ -1008,21 +1007,21 @@ class RelatoriaCrud(MasterDetailCrud):
 
     class CreateView(MasterDetailCrud.CreateView):
         form_class = RelatoriaForm
+        logger = logging.getLogger(__name__)
 
         def get_context_data(self, **kwargs):
-            logger = logging.getLogger(__name__)
             context = super().get_context_data(**kwargs)
 
             try:
-                logger.info("- Tentando obter objeto Comissao.")
+                self.logger.info("- Tentando obter objeto Comissao.")
                 comissao = Comissao.objects.get(
                     pk=context['form'].initial['comissao'])
             except:
-                logger.error("- Objeto Comissão não encontrado.")
+                self.logger.error("- Objeto Comissão não encontrado.")
                 pass
 
             else:
-                logger.info("- Objeto Comissao obtido com sucesso.")
+                self.logger.info("- Objeto Comissao obtido com sucesso.")
                 composicao = comissao.composicao_set.order_by(
                     '-periodo__data_inicio').first()
                 participacao = Participacao.objects.filter(
@@ -1058,19 +1057,21 @@ class RelatoriaCrud(MasterDetailCrud):
     class UpdateView(MasterDetailCrud.UpdateView):
         form_class = RelatoriaForm
 
+        logger = logging.getLogger(__name__)
+
         def get_context_data(self, **kwargs):
-            logger = logging.getLogger(__name__)
+            
             context = super().get_context_data(**kwargs)
 
             try:
-                logger.info("- Tentando obter objeto Comissao.")
+                self.logger.info("- Tentando obter objeto Comissao.")
                 comissao = Comissao.objects.get(
                     pk=context['form'].initial['comissao'])
             except ObjectDoesNotExist:                
-                logger.error("- Objeto Comissão não encontrado.")
+                self.logger.error("- Objeto Comissão não encontrado.")
                 pass
             else:                
-                logger.info("- Objeto Comissao obtido com sucesso.")
+                self.logger.info("- Objeto Comissao obtido com sucesso.")
                 composicao = comissao.composicao_set.order_by(
                     '-periodo__data_inicio').first()
                 participacao = Participacao.objects.filter(
@@ -1098,6 +1099,7 @@ class TramitacaoCrud(MasterDetailCrud):
 
     class CreateView(MasterDetailCrud.CreateView):
         form_class = TramitacaoForm
+        logger = logging.getLogger(__name__)
 
         def get_success_url(self):
             return reverse('sapl.materia:tramitacao_list', kwargs={
@@ -1141,7 +1143,6 @@ class TramitacaoCrud(MasterDetailCrud):
             return context
 
         def form_valid(self, form):
-            logger = logging.getLogger(__name__)
 
             self.object = form.save()
 
@@ -1152,7 +1153,7 @@ class TramitacaoCrud(MasterDetailCrud):
             form.instance.materia.save()
 
             try:
-                logger.info("Tentando enviar Tramitacao.")
+                self.logger.info("Tentando enviar Tramitacao.")
                 tramitacao_signal.send(sender=Tramitacao,
                                        post=self.object,
                                        request=self.request)
@@ -1161,7 +1162,7 @@ class TramitacaoCrud(MasterDetailCrud):
                 msg = _('Tramitação criada, mas e-mail de acompanhamento '
                         'de matéria não enviado. Há problemas na configuração '
                         'do e-mail.')
-                logger.warning('- Tramitação criada, mas e-mail de acompanhamento '
+                self.logger.warning('- Tramitação criada, mas e-mail de acompanhamento '
                         'de matéria não enviado. Há problemas na configuração '
                         'do e-mail.')
                 messages.add_message(self.request, messages.WARNING, msg)
@@ -1170,11 +1171,11 @@ class TramitacaoCrud(MasterDetailCrud):
 
     class UpdateView(MasterDetailCrud.UpdateView):
         form_class = TramitacaoUpdateForm
+        logger = logging.getLogger(__name__)
 
         layout_key = 'TramitacaoUpdate'
 
         def form_valid(self, form):
-            logger = logging.getLogger(__name__)
             self.object = form.save()
 
             if form.instance.status.indicador == 'F':
@@ -1184,7 +1185,7 @@ class TramitacaoCrud(MasterDetailCrud):
             form.instance.materia.save()
 
             try:
-                logger.info("Tentando enviar Tramitacao.")
+                self.logger.info("Tentando enviar Tramitacao.")
                 tramitacao_signal.send(sender=Tramitacao,
                                        post=self.object,
                                        request=self.request)
@@ -1193,7 +1194,7 @@ class TramitacaoCrud(MasterDetailCrud):
                 msg = _('Tramitação atualizada, mas e-mail de acompanhamento '
                         'de matéria não enviado. Há problemas na configuração '
                         'do e-mail.')
-                logger.warning('- Tramitação atualizada, mas e-mail de acompanhamento '
+                self.logger.warning('- Tramitação atualizada, mas e-mail de acompanhamento '
                             'de matéria não enviado. Há problemas na configuração '
                             'do e-mail.')
                 messages.add_message(self.request, messages.WARNING, msg)
@@ -1563,6 +1564,8 @@ class DocumentoAcessorioView(PermissionRequiredMixin, CreateView):
 
 class AcompanhamentoConfirmarView(TemplateView):
 
+    logger = logging.getLogger(__name__)
+
     def get_redirect_url(self, email):
         msg = _('Esta matéria está sendo acompanhada pelo e-mail: %s') % (
             email)
@@ -1571,23 +1574,22 @@ class AcompanhamentoConfirmarView(TemplateView):
                        kwargs={'pk': self.kwargs['pk']})
 
     def get(self, request, *args, **kwargs):
-        logger = logging.getLogger(__name__)
         materia_id = kwargs['pk']
         hash_txt = request.GET.get('hash_txt', '')
 
         try:
-            logger.info("- Tentando obter objeto AcompanhamentoMateria.")
+            self.logger.info("- Tentando obter objeto AcompanhamentoMateria.")
             acompanhar = AcompanhamentoMateria.objects.get(
                 materia_id=materia_id,
                 hash=hash_txt)
         except ObjectDoesNotExist:
-            logger.error("- Objeto AcompanhamentoMateria não encontrado.")
+            self.logger.error("- Objeto AcompanhamentoMateria não encontrado.")
             raise Http404()
         except MultipleObjectsReturned as e:
         # A melhor solução deve ser permitir que a exceção
         # (MultipleObjectsReturned) seja lançada e vá para o log,
         # pois só poderá ser causada por um erro de desenvolvimente
-            logger.error("- " + str(e))
+            self.logger.error("- " + str(e))
             pass
         acompanhar.confirmado = True
         acompanhar.save()
@@ -1597,6 +1599,8 @@ class AcompanhamentoConfirmarView(TemplateView):
 
 class AcompanhamentoExcluirView(TemplateView):
 
+    logger = logging.getLogger(__name__)
+
     def get_success_url(self):
         msg = _('Você parou de acompanhar esta matéria.')
         messages.add_message(self.request, messages.INFO, msg)
@@ -1604,16 +1608,15 @@ class AcompanhamentoExcluirView(TemplateView):
                        kwargs={'pk': self.kwargs['pk']})
 
     def get(self, request, *args, **kwargs):
-        logger = logging.getLogger(__name__)
         materia_id = kwargs['pk']
         hash_txt = request.GET.get('hash_txt', '')
 
         try:
-            logger.info("- Tentando obter objeto AcompanhamentoMateria.")
+            self.logger.info("- Tentando obter objeto AcompanhamentoMateria.")
             AcompanhamentoMateria.objects.get(materia_id=materia_id,
                                               hash=hash_txt).delete()
         except ObjectDoesNotExist:
-            logger.error("- Objeto AcompanhamentoMateria não encontrado.")
+            self.logger.error("- Objeto AcompanhamentoMateria não encontrado.")
             pass
 
         return HttpResponseRedirect(self.get_success_url())
@@ -1835,6 +1838,8 @@ class PrimeiraTramitacaoEmLoteView(PermissionRequiredMixin, FilterView):
 
     primeira_tramitacao = True
 
+    logger = logging.getLogger(__name__)
+
     def get_context_data(self, **kwargs):
         context = super(PrimeiraTramitacaoEmLoteView,
                         self).get_context_data(**kwargs)
@@ -1877,7 +1882,7 @@ class PrimeiraTramitacaoEmLoteView(PermissionRequiredMixin, FilterView):
 
 
     def post(self, request, *args, **kwargs):
-        logger = logging.getLogger(__name__)
+        
         marcadas = request.POST.getlist('materia_id')
 
         tz = timezone.get_current_timezone()
@@ -1933,12 +1938,12 @@ class PrimeiraTramitacaoEmLoteView(PermissionRequiredMixin, FilterView):
             )
             t.save()
             try:
-                logger.info("Tentando enviar tramitação.")
+                self.logger.info("Tentando enviar tramitação.")
                 tramitacao_signal.send(sender=Tramitacao,
                                        post=t,
                                        request=self.request)
             except Exception:
-                logger.error('Tramitação criada, mas e-mail de acompanhamento '
+                self.logger.error('Tramitação criada, mas e-mail de acompanhamento '
                             'de matéria não enviado. Há problemas na configuração '
                             'do e-mail.')
                 flag_error = True
@@ -1958,7 +1963,7 @@ class PrimeiraTramitacaoEmLoteView(PermissionRequiredMixin, FilterView):
             materia.save()
 
         msg = _('Tramitação completa.')
-        logger.info('Tramitação completa.')
+        self.logger.info('Tramitação completa.')
         messages.add_message(request, messages.SUCCESS, msg)
         return self.get(request, self.kwargs)
 

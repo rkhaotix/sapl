@@ -1,4 +1,4 @@
-
+log
 import logging
 
 from django.core.urlresolvers import reverse
@@ -104,16 +104,17 @@ class ComposicaoCrud(MasterDetailCrud):
             return {'comissao': comissao}
 
     class ListView(MasterDetailCrud.ListView):
+        logger = logging.getLogger(__name__)
         template_name = "comissoes/composicao_list.html"
         paginate_by = None
 
         def take_composicao_pk(self):
-            logger = logging.getLogger(__name__)
+            
             try:
-                logger.info('- Tentando obter pk da composição.')
+                self.logger.info('- Tentando obter pk da composição.')
                 return int(self.request.GET['pk'])
             except:
-                logger.error('- Erro ao obter pk da composição. Retornado 0.')
+                self.logger.error('- Erro ao obter pk da composição. Retornado 0.')
                 return 0
 
         def get_context_data(self, **kwargs):
@@ -198,15 +199,15 @@ class ReuniaoCrud(MasterDetailCrud):
         list_field_names = ['data', 'nome', 'tema']
 
     class ListView(MasterDetailCrud.ListView):
+        logger = logging.getLogger(__name__)
         paginate_by = 10
 
         def take_reuniao_pk(self):
-            logger = logging.getLogger(__name__)
             try:
-                logger.info('- Tentando obter pk da reunião.')
+                self.logger.info('- Tentando obter pk da reunião.')
                 return int(self.request.GET['pk'])
             except:
-                logger.error('- Erro ao obter pk da reunião. Retornado 0.')
+                self.logger.error('- Erro ao obter pk da reunião. Retornado 0.')
                 return 0
 
         def get_context_data(self, **kwargs):

@@ -124,6 +124,7 @@ class AutorListView(ListAPIView):
                       qualquer atributo destes models podem ser passados
                       para busca
     """
+    logger = logging.getLogger(__name__)
 
     TR_AUTOR_CHOICE_SERIALIZER = 1
     TR_AUTOR_SERIALIZER = 3
@@ -138,7 +139,7 @@ class AutorListView(ListAPIView):
 
     @property
     def tr(self):
-        logger = logging.getLogger(__name__)
+        
         try:
             tr = int(self.request.GET.get
                      ('tr', AutorListView.TR_AUTOR_CHOICE_SERIALIZER))
@@ -147,7 +148,7 @@ class AutorListView(ListAPIView):
                           AutorListView.TR_AUTOR_SERIALIZER):
                 return AutorListView.TR_AUTOR_CHOICE_SERIALIZER
         except Exception as e:
-            logger.error("- " + str(e))
+            self.logger.error("- " + str(e))
             return AutorListView.TR_AUTOR_CHOICE_SERIALIZER
         return tr
 
@@ -163,6 +164,7 @@ class AutorListView(ListAPIView):
 
 
 class AutoresProvaveisListView(ListAPIView):
+    logger = logging.getLogger(__name__)
 
     permission_classes = (IsAuthenticatedOrReadOnly,)
     queryset = Autor.objects.all()
@@ -173,7 +175,7 @@ class AutoresProvaveisListView(ListAPIView):
     serializer_class = ChoiceSerializer
 
     def get_queryset(self):
-        logger = logging.getLogger(__name__)
+        
         params = {'content_type__isnull': False}
 
         tipo = ''
@@ -182,7 +184,7 @@ class AutoresProvaveisListView(ListAPIView):
             if tipo:
                 params['id'] = tipo
         except Exception as e:
-            logger.error("- " + str(e))
+            self.logger.error("- " + str(e))
             pass
 
         tipos = TipoAutor.objects.filter(**params)

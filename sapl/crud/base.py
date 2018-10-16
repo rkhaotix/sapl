@@ -1,4 +1,4 @@
-
+import logging
 from braces.views import FormMessagesMixin
 from compressor.utils.decorators import cached_property
 from crispy_forms.bootstrap import FieldWithButtons, StrictButton
@@ -102,14 +102,13 @@ variáveis do crud:
 class SearchMixin(models.Model):
 
     search = models.TextField(blank=True, default='')
+    logger = logging.getLogger(__name__)
 
     class Meta:
         abstract = True
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None, auto_update_search=True):
-
-        logger = logging.getLogger(__name__)
 
         if auto_update_search and hasattr(self, 'fields_search'):
             search = ''
@@ -119,7 +118,7 @@ class SearchMixin(models.Model):
                     try:
                         search += str(getattr(self, str_field)) + ' '
                     except Exception as e:
-                        logger.error("- " + str(e))
+                        self.logger.error("- " + str(e))
                         pass
                 else:
                     _self = self
@@ -382,6 +381,7 @@ class CrudBaseMixin(CrispyLayoutFormMixin):
 
 class CrudListView(PermissionRequiredContainerCrudMixin, ListView):
     permission_required = (RP_LIST, )
+    logger = logging.getLogger(__name__)
 
     @classmethod
     def get_url_regex(cls):
@@ -511,7 +511,6 @@ class CrudListView(PermissionRequiredContainerCrudMixin, ListView):
         return context
 
     def get_queryset(self):
-        logger = logging.getLogger(__name__)
         queryset = super().get_queryset()
 
         # form_search_class
@@ -557,7 +556,7 @@ class CrudListView(PermissionRequiredContainerCrudMixin, ListView):
                         try:
                             fm = model._meta.get_field(fo)
                         except Exception as e:
-                            logger.error("- " + str(e))
+                            self.logger.error("- " + str(e))
                             pass
 
                         if fm and hasattr(fm, 'related_model')\
@@ -602,6 +601,7 @@ class CrudListView(PermissionRequiredContainerCrudMixin, ListView):
 class CrudCreateView(PermissionRequiredContainerCrudMixin,
                      FormMessagesMixin, CreateView):
     permission_required = (RP_ADD, )
+    logger = logging.getLogger(__name__)
 
     @classmethod
     def get_url_regex(cls):
@@ -622,13 +622,12 @@ class CrudCreateView(PermissionRequiredContainerCrudMixin,
         return super(CrudCreateView, self).get_context_data(**kwargs)
 
     def form_valid(self, form):
-        logger = logging.getLogger(__name__)
         self.object = form.instance
         try:
             self.object.owner = self.request.user
             self.object.modifier = self.request.user
         except Exception as e:
-            logger.error("- " + str(e))
+            self.logger.error("- " + str(e))
             pass
 
         if self.container_field:
@@ -675,6 +674,7 @@ class CrudDetailView(PermissionRequiredContainerCrudMixin,
     permission_required = (RP_DETAIL, )
     no_entries_msg = _('Nenhum registro Associado.')
     paginate_by = 10
+    logger = logging.getLogger(__name__)
 
     @classmethod
     def get_url_regex(cls):
@@ -684,7 +684,6 @@ class CrudDetailView(PermissionRequiredContainerCrudMixin,
         return [self._as_row(obj) for obj in object_list]
 
     def get_headers(self):
-        logger = logging.getLogger(__name__)
         if not self.object_list:
             return []
         try:
@@ -699,7 +698,7 @@ class CrudDetailView(PermissionRequiredContainerCrudMixin,
                     fieldname).related_model._meta.verbose_name_plural)
                 for fieldname in self.list_field_names_set]
         except Exception as e:
-            logger.error("- " + str(e))
+            self.logger.error("- " + str(e))
             obj = self.crud if hasattr(self, 'crud') else self
             return [getattr(
                 self.object,
@@ -720,7 +719,6 @@ class CrudDetailView(PermissionRequiredContainerCrudMixin,
             args=args)
 
     def _as_row(self, obj):
-        logger = logging.getLogger(__name__)
         try:
             return [(
                 get_field_display(obj, name)[1],
@@ -728,7 +726,7 @@ class CrudDetailView(PermissionRequiredContainerCrudMixin,
                 if i == 0 else None)
                 for i, name in enumerate(self.list_field_names_set)]
         except Exception as e:
-            logger.error("- " + str(e))
+            self.logger.error("- " + str(e))
             return [(
                 getattr(obj, name),
                 self.resolve_model_set_url(ACTION_DETAIL, args=(obj.id,))
@@ -741,11 +739,10 @@ class CrudDetailView(PermissionRequiredContainerCrudMixin,
         return DetailView.get_object(self, queryset=queryset)
 
     def get(self, request, *args, **kwargs):
-        logger = logging.getLogger(__name__)
         try:
             self.object = self.model.objects.get(pk=kwargs.get('pk'))
         except Exception as e:
-            logger.error("- " + str(e))
+            self.logger.error("- " + str(e))
             raise Http404
         obj = self.crud if hasattr(self, 'crud') else self
         if hasattr(obj, 'model_set') and obj.model_set:
@@ -818,14 +815,15 @@ class CrudDetailView(PermissionRequiredContainerCrudMixin,
 class CrudUpdateView(PermissionRequiredContainerCrudMixin,
                      FormMessagesMixin, UpdateView):
     permission_required = (RP_CHANGE, )
+    logger = logging.getLogger(__name__)
 
     def form_valid(self, form):
-        logger = logging.getLogger(__name__)
+        
         self.object = form.instance
         try:
             self.object.modifier = self.request.user
         except Exception as e:
-            logger.error("- " + str(e))
+            self.logger.error("- " + str(e))
             pass
 
         return super().form_valid(form)
@@ -847,6 +845,7 @@ class CrudUpdateView(PermissionRequiredContainerCrudMixin,
 class CrudDeleteView(PermissionRequiredContainerCrudMixin,
                      FormMessagesMixin, DeleteView):
     permission_required = (RP_DELETE, )
+    logger = logging.getLogger(__name__)
 
     @classmethod
     def get_url_regex(cls):
@@ -862,7 +861,6 @@ class CrudDeleteView(PermissionRequiredContainerCrudMixin,
         return self.list_url
 
     def delete(self, request, *args, **kwargs):
-        logger = logging.getLogger(__name__)
         try:
             return super(CrudDeleteView, self).delete(request, args, kwargs)
         except models.ProtectedError as err:
@@ -874,7 +872,7 @@ class CrudDeleteView(PermissionRequiredContainerCrudMixin,
                     i._meta.verbose_name, i
                 )
             error_msg += '</ul>'
-            logger.error("Registro não pode ser removido, pois "
+            self.logger.error("Registro não pode ser removido, pois "
                          "é referenciado por outros registros")
             messages.add_message(request,
                                  messages.ERROR,
@@ -1079,13 +1077,13 @@ class MasterDetailCrud(Crud):
 
     class ListView(Crud.ListView):
         permission_required = RP_LIST,
+        logger = logging.getLogger(__name__)
 
         @classmethod
         def get_url_regex(cls):
             return r'^(?P<pk>\d+)/%s$' % cls.model._meta.model_name
 
         def get_context_data(self, **kwargs):
-            logger = logging.getLogger(__name__)
 
             obj = self.crud if hasattr(self, 'crud') else self
             context = CrudListView.get_context_data(self, **kwargs)
@@ -1118,7 +1116,7 @@ class MasterDetailCrud(Crud):
             try:
                 parent_object = parent_model.objects.get(**params)
             except Exception as e:
-                logger.error("- " + str(e))
+                self.logger.error("- " + str(e))
                 raise Http404()
 
             context[
@@ -1139,6 +1137,7 @@ class MasterDetailCrud(Crud):
 
     class CreateView(Crud.CreateView):
         permission_required = RP_ADD,
+        logger = logging.getLogger(__name__)
 
         def dispatch(self, request, *args, **kwargs):
             return PermissionRequiredMixin.dispatch(
@@ -1164,7 +1163,6 @@ class MasterDetailCrud(Crud):
             return form
 
         def get_context_data(self, **kwargs):
-            logger = logging.getLogger(__name__)
 
             obj = self.crud if hasattr(self, 'crud') else self
             context = Crud.CreateView.get_context_data(
@@ -1184,7 +1182,7 @@ class MasterDetailCrud(Crud):
                 try:
                     parent_object = parent_model.objects.get(**params)
                 except Exception as e:
-                    logger.error("- " + str(e))
+                    self.logger.error("- " + str(e))
                     raise Http404()
             else:
                 parent_model = self.model
