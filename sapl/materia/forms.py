@@ -1480,6 +1480,8 @@ class DevolverProposicaoForm(forms.ModelForm):
     justificativa_devolucao = forms.CharField(
         required=False, widget=widgets.Textarea(attrs={'rows': 5}))
 
+    logger = logging.getLogger(__name__)
+
     class Meta:
         model = Proposicao
         fields = [
