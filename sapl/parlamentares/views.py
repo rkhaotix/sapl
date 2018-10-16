@@ -354,20 +354,21 @@ class ComposicaoColigacaoCrud(MasterDetailCrud):
 
 
 class LegislaturaCrud(CrudAux):
+    
     model = Legislatura
     help_topic = 'legislatura'
 
     class CreateView(CrudAux.CreateView):
+        logger = logging.getLogger(__name__)
         form_class = LegislaturaForm
 
         def get_initial(self):
-            logger = logging.getLogger(__name__)
             try:
-                logger.error("- Tentando obter última legislatura.")
+                self.logger.error("- Tentando obter última legislatura.")
                 ultima_legislatura = Legislatura.objects.latest('numero')
                 numero = ultima_legislatura.numero + 1
             except Legislatura.DoesNotExist:
-                logger.error("- Legislatura não encontrada. Número definido como 1.")
+                self.logger.error("- Legislatura não encontrada. Número definido como 1.")
                 numero = 1
             return {'numero': numero}
 
@@ -459,18 +460,19 @@ class ParlamentarCrud(Crud):
     class ListView(Crud.ListView):
         template_name = "parlamentares/parlamentares_list.html"
         paginate_by = None
+        logger = logging.getLogger(__name__)
 
         @xframe_options_exempt
         def get(self, request, *args, **kwargs):
             return super().get(request, *args, **kwargs)
 
         def take_legislatura_id(self):
-            logger = logging.getLogger(__name__)
+            
             try:
-                logger.info("- Tentando obter id da legislatura.")
+                self.logger.info("- Tentando obter id da legislatura.")
                 return int(self.request.GET['pk'])
             except:
-                logger.error("- Legislatura não possui ID. Buscando em todas as entradas.")
+                self.logger.error("- Legislatura não possui ID. Buscando em todas as entradas.")
                 legislaturas = Legislatura.objects.all()
                 for l in legislaturas:
                     if l.atual():
@@ -480,7 +482,7 @@ class ParlamentarCrud(Crud):
                 return -1
 
         def get_queryset(self):
-            logger = logging.getLogger(__name__)
+            self.logger = logging.getLogger(__name__)
             queryset = super().get_queryset()
             legislatura_id = self.take_legislatura_id()
             # Pelo menos uma casa legislativa criou uma
@@ -491,14 +493,14 @@ class ParlamentarCrud(Crud):
                         mandato_titular=F('mandato__titular'))
             else:
                 try:
-                    logger.info("- Tentando obter o mais recente registro do objeto Legislatura.")
+                    self.logger.info("- Tentando obter o mais recente registro do objeto Legislatura.")
                     l = Legislatura.objects.all().order_by(
                         '-data_inicio').first()
                 except ObjectDoesNotExist:
-                    logger.error("- Objeto não encontrado. Retornando todos os registros.")
+                    self.logger.error("- Objeto não encontrado. Retornando todos os registros.")
                     return Legislatura.objects.all()
                 else:
-                    logger.info("- Objeto encontrado com sucesso.")
+                    self.logger.info("- Objeto encontrado com sucesso.")
                     if l is None:
                         return Legislatura.objects.all()
                     return queryset.filter(mandato__legislatura_id=l).annotate(
@@ -510,7 +512,6 @@ class ParlamentarCrud(Crud):
 
         def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            logger = logging.getLogger(__name__)
 
             # Adiciona legislatura para filtrar parlamentares
             legislaturas = Legislatura.objects.all().order_by('-numero')
@@ -536,7 +537,7 @@ class ParlamentarCrud(Crud):
                 # da legislatura e data de desfiliação deve nula, ou maior,
                 # ou igual a data de fim da legislatura
                 try:
-                    logger.info("- Tentando obter filiação do parlamentar.")
+                    self.logger.info("- Tentando obter filiação do parlamentar.")
                     filiacao = parlamentar.filiacao_set.get(Q(
                         data__lte=legislatura.data_fim,
                         data_desfiliacao__gte=legislatura.data_fim) | Q(
@@ -545,20 +546,20 @@ class ParlamentarCrud(Crud):
 
                 # Caso não exista filiação com essas condições
                 except ObjectDoesNotExist:
-                    logger.error("- Parlamentar não possui filiação.")
+                    self.logger.error("- Parlamentar não possui filiação.")
                     row[1] = ('Não possui filiação', None, None)
 
                 # Caso exista mais de uma filiação nesse intervalo
                 # Entretanto, NÃO DEVE OCORRER
                 except MultipleObjectsReturned:
-                    logger.error("- O Parlamentar possui duas filiações conflitantes")
+                    self.logger.error("- O Parlamentar possui duas filiações conflitantes")
                     row[1] = (
                         'O Parlamentar possui duas filiações conflitantes',
                         None)
 
                 # Caso encontre UMA filiação nessas condições
                 else:
-                    logger.info("- Filiação encontrada com sucesso.")
+                    self.logger.info("- Filiação encontrada com sucesso.")
                     row[1] = (filiacao.partido.sigla, None, None)
 
             return context
@@ -567,6 +568,7 @@ class ParlamentarCrud(Crud):
 class ParlamentarMateriasView(FormView):
     template_name = "parlamentares/materias.html"
     success_url = reverse_lazy('sapl.parlamentares:parlamentar_materia')
+    logger = logging.getLogger(__name__)
 
     def get_autoria(self, resultset):
         autoria = {}
@@ -586,16 +588,15 @@ class ParlamentarMateriasView(FormView):
 
     @xframe_options_exempt
     def get(self, request, *args, **kwargs):
-        logger = logging.getLogger(__name__)
         parlamentar_pk = kwargs['pk']
 
         try:
-            logger.info("- Tentando obter autor da matéria.")
+            self.logger.info("- Tentando obter autor da matéria.")
             autor = Autor.objects.get(
                 content_type=ContentType.objects.get_for_model(Parlamentar),
                 object_id=parlamentar_pk)
         except ObjectDoesNotExist:
-            logger.error("- Este Parlamentar não é autor de matéria.")
+            self.logger.error("- Este Parlamentar não é autor de matéria.")
             mensagem = _('Este Parlamentar não é autor de matéria.')
             messages.add_message(request, messages.ERROR, mensagem)
             return HttpResponseRedirect(

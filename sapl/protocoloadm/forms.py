@@ -227,6 +227,8 @@ class DocumentoAdministrativoFilterSet(django_filters.FilterSet):
 
 class AnularProcoloAdmForm(ModelForm):
 
+    logger = logging.getLogger(__name__)
+
     numero = forms.CharField(required=True,
                              label=Protocolo._meta.
                              get_field('numero').verbose_name
@@ -244,8 +246,6 @@ class AnularProcoloAdmForm(ModelForm):
     def clean(self):
         super(AnularProcoloAdmForm, self).clean()
 
-        logger = logging.getLogger(__name__)
-
         cleaned_data = self.cleaned_data
 
         if not self.is_valid():
@@ -255,15 +255,15 @@ class AnularProcoloAdmForm(ModelForm):
         ano = cleaned_data['ano']
 
         try:
-            logger.info("- Tentando obter Protocolo correspondente.")
+            self.logger.info("- Tentando obter Protocolo correspondente.")
             protocolo = Protocolo.objects.get(numero=numero, ano=ano)
             if protocolo.anulado:
-                logger.error("- Protocolo %s/%s já encontra-se anulado" % (numero, ano))
+                self.logger.error("- Protocolo %s/%s já encontra-se anulado" % (numero, ano))
                 raise forms.ValidationError(
                     _("Protocolo %s/%s já encontra-se anulado")
                     % (numero, ano))
         except ObjectDoesNotExist:
-            logger.error("- Protocolo %s/%s não existe" % (numero, ano))
+            self.logger.error("- Protocolo %s/%s não existe" % (numero, ano))
             raise forms.ValidationError(
                 _("Protocolo %s/%s não existe" % (numero, ano)))
 
@@ -276,7 +276,7 @@ class AnularProcoloAdmForm(ModelForm):
             ).order_by('-ano', '-numero').exists()
 
         if exists:
-            logger.error("- Protocolo %s/%s não pode ser removido pois existem "
+            self.logger.error("- Protocolo %s/%s não pode ser removido pois existem "
                         "documentos vinculados a ele." % (numero, ano))
             raise forms.ValidationError(
                 _("Protocolo %s/%s não pode ser removido pois existem "
@@ -394,6 +394,9 @@ class ProtocoloDocumentForm(ModelForm):
 
 
 class ProtocoloMateriaForm(ModelForm):
+
+    logger = logging.getLogger(__name__)
+
     autor = forms.ModelChoiceField(required=True,
                                    empty_label='------',
                                    queryset=Autor.objects.all()
@@ -447,23 +450,20 @@ class ProtocoloMateriaForm(ModelForm):
                   ]
 
     def clean_autor(self):
-        logger = logging.getLogger(__name__)
         autor_field = self.cleaned_data['autor']
         try:
-            logger.info("- Tentando obter Autor correspondente.")
+            self.logger.info("- Tentando obter Autor correspondente.")
             autor = Autor.objects.get(id=autor_field.id)
         except ObjectDoesNotExist:
-            logger.error("- Autor não encontrado. Definido como None.")
+            self.logger.error("- Autor não encontrado. Definido como None.")
             autor_field = None
         else:
-            logger.info("- Autor encontrado com sucesso.")
+            self.logger.info("- Autor encontrado com sucesso.")
             autor_field = autor
         return autor_field
 
     def clean(self):
         super(ProtocoloMateriaForm, self).clean()
-
-        logger = logging.getLogger(__name__)
 
         if not self.is_valid():
             return self.cleaned_data
@@ -472,21 +472,21 @@ class ProtocoloMateriaForm(ModelForm):
         if self.is_valid():
             if data['vincular_materia'] == 'True':
                 try:
-                    logger.info("- Tentando obter MateriaLegislativa correspondente.")
+                    self.logger.info("- Tentando obter MateriaLegislativa correspondente.")
                     if not data['ano_materia'] or not data['numero_materia']:
-                        logger.error("- Favor informar o número e ano da matéria a ser vinculada")
+                        self.logger.error("- Favor informar o número e ano da matéria a ser vinculada")
                         raise ValidationError(
                             'Favor informar o número e ano da matéria a ser vinculada')
                     self.materia = MateriaLegislativa.objects.get(ano=data['ano_materia'],
                                                                   numero=data['numero_materia'],
                                                                   tipo=data['tipo_materia'])
                     if self.materia.numero_protocolo:
-                        logger.error("- Matéria Legislativa informada já possui o protocolo {}/{} vinculado."
+                        self.logger.error("- Matéria Legislativa informada já possui o protocolo {}/{} vinculado."
                                         .format(self.materia.numero_protocolo, self.materia.ano))
                         raise ValidationError(_('Matéria Legislativa informada já possui o protocolo {}/{} vinculado.'
                                                 .format(self.materia.numero_protocolo, self.materia.ano)))
                 except ObjectDoesNotExist:
-                    logger.error("- Matéria Legislativa informada não existente.")
+                    self.logger.error("- Matéria Legislativa informada não existente.")
                     raise ValidationError(_('Matéria Legislativa informada não existente.'))
 
         return data
@@ -665,6 +665,8 @@ class TramitacaoAdmEditForm(TramitacaoAdmForm):
 
 class DocumentoAdministrativoForm(ModelForm):
 
+    logger = logging.getLogger(__name__)
+
     data = forms.DateField(initial=timezone.now)
 
     ano_protocolo = forms.ChoiceField(required=False,
@@ -708,8 +710,6 @@ class DocumentoAdministrativoForm(ModelForm):
     def clean(self):
         super(DocumentoAdministrativoForm, self).clean()
 
-        logger = logging.getLogger(__name__)
-
         cleaned_data = self.cleaned_data
 
         if not self.is_valid():
@@ -737,18 +737,18 @@ class DocumentoAdministrativoForm(ModelForm):
         # campos opcionais, mas que se informados devem ser válidos
         if numero_protocolo and ano_protocolo:
             try:
-                logger.info("- Tentando obter Protoclo correspondente.")
+                self.logger.info("- Tentando obter Protoclo correspondente.")
                 self.fields['protocolo'].initial = Protocolo.objects.get(
                     numero=numero_protocolo,
                     ano=ano_protocolo).pk
             except ObjectDoesNotExist:
-                logger.error("- Protocolo %s/%s inexistente." % (
+                self.logger.error("- Protocolo %s/%s inexistente." % (
                             numero_protocolo, ano_protocolo))
                 msg = _('Protocolo %s/%s inexistente.' % (
                     numero_protocolo, ano_protocolo))
                 raise ValidationError(msg)
             except MultipleObjectsReturned:
-                logger.error("- Existe mais de um Protocolo com este ano e número." % (
+                self.logger.error("- Existe mais de um Protocolo com este ano e número." % (
                                 numero_protocolo, ano_protocolo))
                 msg = _(
                     'Existe mais de um Protocolo com este ano e número.' % (
@@ -818,6 +818,8 @@ class DocumentoAdministrativoForm(ModelForm):
 
 class DesvincularDocumentoForm(ModelForm):
 
+    logger = logging.getLogger(__name__)
+
     numero = forms.CharField(required=True,
                              label=DocumentoAdministrativo._meta.
                              get_field('numero').verbose_name
@@ -831,8 +833,6 @@ class DesvincularDocumentoForm(ModelForm):
     def clean(self):
         super(DesvincularDocumentoForm, self).clean()
 
-        logger = logging.getLogger(__name__)
-
         cleaned_data = self.cleaned_data
 
         if not self.is_valid():
@@ -843,14 +843,14 @@ class DesvincularDocumentoForm(ModelForm):
         tipo = cleaned_data['tipo']
 
         try:
-            logger.info("- Tentando obter DocumentoAdministrativo correspondente.")
+            self.logger.info("- Tentando obter DocumentoAdministrativo correspondente.")
             documento = DocumentoAdministrativo.objects.get(numero=numero, ano=ano, tipo=tipo)
             if not documento.protocolo:
-                logger.error("- %s %s/%s não se encontra vinculado a nenhum protocolo" % (tipo, numero, ano))
+                self.logger.error("- %s %s/%s não se encontra vinculado a nenhum protocolo" % (tipo, numero, ano))
                 raise forms.ValidationError(
                     _("%s %s/%s não se encontra vinculado a nenhum protocolo" % (tipo, numero, ano)))
         except ObjectDoesNotExist:
-            logger.error("- %s %s/%s não existe" % (tipo, numero, ano))
+            self.logger.error("- %s %s/%s não existe" % (tipo, numero, ano))
             raise forms.ValidationError(
                 _("%s %s/%s não existe" % (tipo, numero, ano)))
 
@@ -884,6 +884,8 @@ class DesvincularDocumentoForm(ModelForm):
 
 class DesvincularMateriaForm(forms.Form):
 
+    logger = logging.getLogger(__name__)
+
     numero = forms.CharField(required=True,
                              label=_('Número da Matéria'))
     ano = forms.ChoiceField(required=True,
@@ -898,8 +900,6 @@ class DesvincularMateriaForm(forms.Form):
     def clean(self):
         super(DesvincularMateriaForm, self).clean()
 
-        logger = logging.getLogger(__name__)
-
         cleaned_data = self.cleaned_data
 
         if not self.is_valid():
@@ -910,14 +910,14 @@ class DesvincularMateriaForm(forms.Form):
         tipo = cleaned_data['tipo']
 
         try:
-            logger.info("- Tentando obter MateriaLegislativa correspondente.")
+            self.logger.info("- Tentando obter MateriaLegislativa correspondente.")
             materia = MateriaLegislativa.objects.get(numero=numero, ano=ano, tipo=tipo)
             if not materia.numero_protocolo:
-                logger.error("- %s %s/%s não se encontra vinculada a nenhum protocolo" % (tipo, numero, ano))
+                self.logger.error("- %s %s/%s não se encontra vinculada a nenhum protocolo" % (tipo, numero, ano))
                 raise forms.ValidationError(
                     _("%s %s/%s não se encontra vinculada a nenhum protocolo" % (tipo, numero, ano)))
         except ObjectDoesNotExist:
-            logger.error("- %s %s/%s não existe" % (tipo, numero, ano))
+            self.logger.error("- %s %s/%s não existe" % (tipo, numero, ano))
             raise forms.ValidationError(
                 _("%s %s/%s não existe" % (tipo, numero, ano)))
 
