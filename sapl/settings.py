@@ -310,15 +310,15 @@ LOGGING = {
             'format': '%(levelname)s %(asctime)s %(message)s'
         },
     },
-    'filters': {
-        # TODO Ver depois !
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        },
-        'site_filter': {
-                '()': 'sapl.logging_filters.SiteFilter',
-        },
-    },
+#    'filters': {
+#        # TODO Ver depois !
+#        'require_debug_false': {
+#            '()': 'django.utils.log.RequireDebugFalse'
+#        },
+#        'site_filter': {
+#                '()': 'sapl.logging_filters.SiteFilter',
+#        },
+#    },
     'handlers': {
         'console': {
             'level': 'INFO',
