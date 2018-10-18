@@ -118,7 +118,7 @@ class SearchMixin(models.Model):
                     try:
                         search += str(getattr(self, str_field)) + ' '
                     except Exception as e:
-                        self.logger.error("- " + str(e))
+                        self.logger.error(str(e))
                         pass
                 else:
                     _self = self
@@ -556,7 +556,7 @@ class CrudListView(PermissionRequiredContainerCrudMixin, ListView):
                         try:
                             fm = model._meta.get_field(fo)
                         except Exception as e:
-                            self.logger.error("- " + str(e))
+                            self.logger.error(str(e))
                             pass
 
                         if fm and hasattr(fm, 'related_model')\
@@ -627,7 +627,7 @@ class CrudCreateView(PermissionRequiredContainerCrudMixin,
             self.object.owner = self.request.user
             self.object.modifier = self.request.user
         except Exception as e:
-            self.logger.error("- " + str(e))
+            self.logger.error(str(e))
             pass
 
         if self.container_field:
@@ -698,7 +698,7 @@ class CrudDetailView(PermissionRequiredContainerCrudMixin,
                     fieldname).related_model._meta.verbose_name_plural)
                 for fieldname in self.list_field_names_set]
         except Exception as e:
-            self.logger.error("- " + str(e))
+            self.logger.error(tr(e))
             obj = self.crud if hasattr(self, 'crud') else self
             return [getattr(
                 self.object,
@@ -726,7 +726,7 @@ class CrudDetailView(PermissionRequiredContainerCrudMixin,
                 if i == 0 else None)
                 for i, name in enumerate(self.list_field_names_set)]
         except Exception as e:
-            self.logger.error("- " + str(e))
+            self.logger.error(str(e))
             return [(
                 getattr(obj, name),
                 self.resolve_model_set_url(ACTION_DETAIL, args=(obj.id,))
@@ -742,7 +742,7 @@ class CrudDetailView(PermissionRequiredContainerCrudMixin,
         try:
             self.object = self.model.objects.get(pk=kwargs.get('pk'))
         except Exception as e:
-            self.logger.error("- " + str(e))
+            self.logger.error(str(e))
             raise Http404
         obj = self.crud if hasattr(self, 'crud') else self
         if hasattr(obj, 'model_set') and obj.model_set:
@@ -823,7 +823,7 @@ class CrudUpdateView(PermissionRequiredContainerCrudMixin,
         try:
             self.object.modifier = self.request.user
         except Exception as e:
-            self.logger.error("- " + str(e))
+            self.logger.error(str(e))
             pass
 
         return super().form_valid(form)
@@ -1116,7 +1116,7 @@ class MasterDetailCrud(Crud):
             try:
                 parent_object = parent_model.objects.get(**params)
             except Exception as e:
-                self.logger.error("- " + str(e))
+                self.logger.error(str(e))
                 raise Http404()
 
             context[
@@ -1182,7 +1182,7 @@ class MasterDetailCrud(Crud):
                 try:
                     parent_object = parent_model.objects.get(**params)
                 except Exception as e:
-                    self.logger.error("- " + str(e))
+                    self.logger.error(str(e))
                     raise Http404()
             else:
                 parent_model = self.model
