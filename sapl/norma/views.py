@@ -207,12 +207,12 @@ class NormaCrud(Crud):
         def get_initial(self):
             logger = logging.getLogger(__name__)
             try:
-                logger.info('- Tentando obter objeto de modelo da esfera da federação.')
+                logger.info('Tentando obter objeto de modelo da esfera da federação.')
                 esfera = sapl.base.models.AppConfig.objects.last(
                 ).esfera_federacao
                 self.initial['esfera_federacao'] = esfera
             except:
-                logger.error('- Erro ao obter objeto de modelo da esfera da federação.')
+                logger.error('Erro ao obter objeto de modelo da esfera da federação.')
                 pass
             self.initial['complemento'] = False
             return self.initial
@@ -251,14 +251,16 @@ def recuperar_norma(request):
     ano = request.GET['ano']
 
     try:
-        logger.info('- Tentando obter norma.')
+        logger.info('Tentando obter NormaJuridica (tipo={}, ano={}, numero={}).'
+                    .format(tipo, ano, numero))
         norma = NormaJuridica.objects.get(tipo=tipo,
                                           ano=ano,
                                           numero=numero)
         response = JsonResponse({'ementa': norma.ementa,
                                  'id': norma.id})
     except ObjectDoesNotExist:
-        logger.error('- Norma buscada não existe. Definida com ementa vazia e id 0.')
+        logger.error('NormaJuridica buscada (tipo={}, ano={}, numero={}) não existe. '
+                     'Definida com ementa vazia e id 0.'.format(tipo, ano, numero))
         response = JsonResponse({'ementa': '', 'id': 0})
 
     return response
