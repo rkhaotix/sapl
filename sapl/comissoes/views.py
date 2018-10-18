@@ -110,10 +110,10 @@ class ComposicaoCrud(MasterDetailCrud):
         def take_composicao_pk(self):
             
             try:
-                self.logger.info('- Tentando obter pk da composição.')
+                self.logger.debug('Tentando obter pk da composição.')
                 return int(self.request.GET['pk'])
-            except:
-                self.logger.error('- Erro ao obter pk da composição. Retornado 0.')
+            except Exception as e:
+                self.logger.error('Erro ao obter pk da composição. Retornado 0. ' + str(e))
                 return 0
 
         def get_context_data(self, **kwargs):
@@ -203,10 +203,10 @@ class ReuniaoCrud(MasterDetailCrud):
 
         def take_reuniao_pk(self):
             try:
-                self.logger.info('- Tentando obter pk da reunião.')
+                self.logger.debug('Tentando obter pk da reunião.')
                 return int(self.request.GET['pk'])
-            except:
-                self.logger.error('- Erro ao obter pk da reunião. Retornado 0.')
+            except Exception as e:
+                self.logger.error('Erro ao obter pk da reunião. Retornado 0. ' + str(e))
                 return 0
 
         def get_context_data(self, **kwargs):
