@@ -148,7 +148,7 @@ class AutorListView(ListAPIView):
                           AutorListView.TR_AUTOR_SERIALIZER):
                 return AutorListView.TR_AUTOR_CHOICE_SERIALIZER
         except Exception as e:
-            self.logger.error("- " + str(e))
+            self.logger.error(str(e))
             return AutorListView.TR_AUTOR_CHOICE_SERIALIZER
         return tr
 
@@ -184,7 +184,7 @@ class AutoresProvaveisListView(ListAPIView):
             if tipo:
                 params['id'] = tipo
         except Exception as e:
-            self.logger.error("- " + str(e))
+            self.logger.error(str(e))
             pass
 
         tipos = TipoAutor.objects.filter(**params)

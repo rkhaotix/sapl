@@ -140,10 +140,10 @@ class AutoresPossiveisFilterSet(FilterSet):
     def filter_tipo(self, queryset, value):
         
         try:
-            self.logger.info("- Tentando obter Tipo de Autor correspondente.")
+            self.logger.debug("Tentando obter TipoAutor correspondente à pk {}.".format(value))
             tipo = TipoAutor.objects.get(pk=value)
         except:
-            self.logger.error("- Tipo de Autor inexistente.")
+            self.logger.error("TipoAutor(pk={}) inexistente.".format(value))
             raise serializers.ValidationError(_('Tipo de Autor inexistente.'))
 
         qs = queryset.filter(tipo=tipo)

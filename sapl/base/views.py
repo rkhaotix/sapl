@@ -171,7 +171,7 @@ class AutorCrud(CrudAux):
                                   kwargs={'pk': pk_autor})
             
             try:
-                self.logger.info('- Enviando email na edição de Autores.')
+                self.logger.debug('Enviando email na edição de Autores.')
                 kwargs = {}
                 user = self.object.user
 
@@ -198,8 +198,8 @@ class AutorCrud(CrudAux):
                 destinatario = [user.email]
                 send_mail(assunto, mensagem, remetente, destinatario,
                           fail_silently=False)
-            except:
-                self.logger.error('- Erro no envio de email na edição de Autores.')
+            except Exception as e:
+                self.logger.error('Erro no envio de email na edição de Autores. ' + str(e))
                 sapl_logger.error(
                     _('Erro no envio de email na edição de Autores.'))
             return url_reverse
@@ -225,7 +225,7 @@ class AutorCrud(CrudAux):
                                   kwargs={'pk': pk_autor})
             
             try:
-                self.logger.info('- Enviando email na criação de Autores.')
+                self.logger.debug('Enviando email na criação de Autores.')
 
                 kwargs = {}
                 user = self.object.user
@@ -253,10 +253,10 @@ class AutorCrud(CrudAux):
                 destinatario = [user.email]
                 send_mail(assunto, mensagem, remetente, destinatario,
                           fail_silently=False)
-            except:
+            except Exception as e:
                 print(
                     _('Erro no envio de email na criação de Autores.'))
-                self.logger.error('- Erro no envio de email na criação de Autores.')
+                self.logger.error('Erro no envio de email na criação de Autores. ' + str(e))
                     
             return url_reverse
 
@@ -344,17 +344,18 @@ class RelatorioPresencaSessaoView(FilterView):
                 'ordemdia_porc': 0
             })
             try:
-                self.logger.info('Tentando obter presença do parlamentar.')
+                self.logger.debug('Tentando obter presença do parlamentar (pk={}).'.format(p.id))
                 sessao_count = presenca_sessao.get(parlamentar_id=p.id)[1]
-            except ObjectDoesNotExist:
-                self.logger.error('Erro ao obter presença do parlamentar. Definido como 0.')
+            except ObjectDoesNotExist as e:
+                self.logger.error('Erro ao obter presença do parlamentar (pk={}). Definido como 0. '.format(p.id) + str(e))
                 sessao_count = 0
             try:
                 # Presenças de cada Ordem do Dia
-                self.logger.info('Tentando obter presença de cada Ordem do Dia.')
+                self.logger.info('Tentando obter PresencaOrdemDia para o parlamentar pk={}.'.format(p.id))
                 ordemdia_count = presenca_ordem.get(parlamentar_id=p.id)[1]
             except ObjectDoesNotExist:
-                self.logger.error('Erro ao obter presença de cada Ordem do Dia. Definido como 0.')
+                self.logger.error('Erro ao obter PresencaOrdemDia para o parlamentar pk={}. '
+                                    'Definido como 0.'.format(p.id))
                 ordemdia_count = 0
 
             parlamentares_presencas[i].update({
@@ -870,10 +871,10 @@ class HelpTopicView(TemplateView):
 
         topico = self.kwargs['topic']
         try:
-            self.logger.info('- Tentando obter template %s.html.' % topico)
+            self.logger.debug('Tentando obter template %s.html.' % topico)
             get_template('ajuda/%s.html' % topico)
-        except TemplateDoesNotExist:
-            self.logger.error('- Erro ao obter template %s.html. Template não existe.' % topico)
+        except TemplateDoesNotExist as e:
+            self.logger.error('Erro ao obter template {}.html. Template não existe. '.format(topico) + str(e))
             raise Http404()
         return ['ajuda/%s.html' % topico]
 

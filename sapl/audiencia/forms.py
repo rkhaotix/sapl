@@ -71,26 +71,27 @@ class AudienciaForm(forms.ModelForm):
 
         if materia and ano_materia and tipo_materia:
             try:
-                self.logger.info("- Tentando obter matéria correspondente.")
+                self.logger.info("Tentando obter MateriaLegislativa %s nº %s/%s." % (tipo_materia, materia, ano_materia))
                 materia = MateriaLegislativa.objects.get(
                     numero=materia,
                     ano=ano_materia,
                     tipo=tipo_materia)
             except ObjectDoesNotExist:
-                msg = _('- A matéria %s nº %s/%s não existe no cadastro'
+                msg = _('A matéria %s nº %s/%s não existe no cadastro'
                         ' de matérias legislativas.' % (tipo_materia, materia, ano_materia))
-                self.logger.error('- A matéria %s nº %s/%s não existe no cadastro'
+                self.logger.error('A MateriaLegislativa %s nº %s/%s não existe no cadastro'
                         ' de matérias legislativas.' % (tipo_materia, materia, ano_materia))
                 raise ValidationError(msg)
             else:
-                self.logger.info("- Matéria obtida com sucesso.")
+                self.logger.info("MateriaLegislativa %s nº %s/%s obtida com sucesso." % (tipo_materia, materia, ano_materia))
                 cleaned_data['materia'] = materia
 
         else:
             campos = [materia, tipo_materia, ano_materia]
             if campos.count(None) + campos.count('') < len(campos):
                 msg = _('Preencha todos os campos relacionados à Matéria Legislativa')
-                self.logger.error('- Algum campo relacionado à Matéria Legislativa não foi preenchido.')
+                self.logger.error('Algum campo relacionado à MatériaLegislativa %s nº %s/%s 
+                                'não foi preenchido.' % (tipo_materia, materia, ano_materia))
                 raise ValidationError(msg)
 
         if not cleaned_data['numero']:
@@ -106,8 +107,9 @@ class AudienciaForm(forms.ModelForm):
         if self.cleaned_data['hora_inicio'] and self.cleaned_data['hora_fim']:
             if (self.cleaned_data['hora_fim'] <
                 self.cleaned_data['hora_inicio']):
-                    msg = _('A hora de fim não pode ser anterior a hora de início')
-                    self.logger.error('- Hora de fim anterior à hora de início.')
+                    msg = _('A hora de fim ({}) não pode ser anterior a hora '
+                    'de início({})'.format(self.cleaned_data['hora_fim'], self.cleaned_data['hora_inicio']))
+                    self.logger.error('Hora de fim anterior à hora de início.')
                     raise ValidationError(msg)
 
         return cleaned_data

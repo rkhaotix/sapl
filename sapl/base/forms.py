@@ -83,7 +83,7 @@ class UsuarioCreateForm(ModelForm):
 
         data = self.cleaned_data
         if data['password1'] != data['password2']:
-            self.logger.error('- Erro de validação. Senha incorreta.')
+            self.logger.error('Erro de validação. Senhas informadas ({}, {}) são diferentes.'.format(data['password1'], data['password2']))
             raise ValidationError('Senhas informadas são diferentes')
 
         return data
@@ -158,7 +158,7 @@ class UsuarioEditForm(ModelForm):
 
         data = self.cleaned_data
         if data['password1'] and data['password1'] != data['password2']:
-            self.logger.error('- Erro de validação. Senha incorreta.')
+            self.logger.error('Erro de validação. Senhas informadas ({}, {}) são diferentes.'.format(data['password1'], data['password2']))
             raise ValidationError('Senhas informadas são diferentes')
 
         return data
@@ -214,27 +214,29 @@ class SessaoLegislativaForm(ModelForm):
         ult = 0
 
         if numero <= ult and flag_edit:
-            self.logger.error('- O número da Sessão Legislativa é menor ou igual '
-                        'que o de Sessões Legislativas passadas')
+            self.logger.error('O número da SessaoLegislativa ({}) é menor ou igual '
+                        'que o de Sessões Legislativas passadas ({})'.format(numero, ult))
             raise ValidationError('O número da Sessão Legislativa não pode ser menor ou igual '
                                   'que o de Sessões Legislativas passadas')
 
         if data_inicio < data_inicio_leg or \
             data_inicio > data_fim_leg:
-            self.logger.error('- A data de início da Sessão Legislativa está compreendida '
-                        'fora da data início e fim da Legislatura selecionada')
+            self.logger.error('A data de início ({}) da SessaoLegislativa está compreendida '
+                            'fora da data início ({}) e fim ({}) da Legislatura '
+                            'selecionada'.format(data_inicio, data_inicio_leg, data_fim_leg))
             raise ValidationError('A data de início da Sessão Legislativa deve estar compreendida '
                                   'entre a data início e fim da Legislatura selecionada')
 
         if data_fim > data_fim_leg or \
             data_fim < data_inicio_leg:
-            self.logger.error('- A data de fim da Sessão Legislativa está compreendida '
-                        'fora da data início e fim da Legislatura selecionada')
+            self.logger.error('A data de fim ({}) da SessaoLegislativa está compreendida '
+                        'fora da data início ({}) e fim ({}) da Legislatura '
+                        'selecionada.'.format(data_fim, data_inicio_leg, data_fim_leg))
             raise ValidationError('A data de fim da Sessão Legislativa deve estar compreendida '
                                   'entre a data início e fim da Legislatura selecionada')
 
         if data_inicio > data_fim:
-            self.logger.error('- Data início superior à data fim')
+            self.logger.error('Data início ({}) superior à data fim ({}).'.format(data_inicio, data_fim))
             raise ValidationError('Data início não pode ser superior à data fim')
 
         data_inicio_intervalo = cleaned_data['data_inicio_intervalo']
@@ -242,8 +244,8 @@ class SessaoLegislativaForm(ModelForm):
 
         if data_inicio_intervalo and data_fim_intervalo and \
             data_inicio_intervalo > data_fim_intervalo:
-                self.logger.error(' - Data início de intervalo'
-                            'superior à data fim de intervalo')
+                self.logger.error('Data início de intervalo ({}) superior à '
+                                'data fim de intervalo ({}).'.format(data_inicio_intervalo, data_fim_intervalo))
                 raise ValidationError('Data início de intervalo não pode ser '
                                       'superior à data fim de intervalo')
 
@@ -252,9 +254,10 @@ class SessaoLegislativaForm(ModelForm):
                     data_inicio_intervalo < data_inicio_leg or \
                     data_inicio_intervalo > data_fim or \
                     data_inicio_intervalo > data_fim_leg:
-                self.logger.error('- A data de início do intervalo não está compreendida entre '
-                            'as datas de início e fim tanto da Legislatura quanto da '
-                            'própria Sessão Legislativa')
+                self.logger.error('A data de início do intervalo ({}) não está compreendida entre '
+                            'as datas de início ({}) e fim ({}) tanto da Legislatura quanto da '
+                            'própria Sessão Legislativa ({} e {}).'
+                            .format(data_inicio_intervalo, data_inicio_leg, data_fim_leg, data_inicio, data_fim))
                 raise ValidationError('A data de início do intervalo deve estar compreendida entre '
                                       'as datas de início e fim tanto da Legislatura quanto da '
                                       'própria Sessão Legislativa')
@@ -263,9 +266,10 @@ class SessaoLegislativaForm(ModelForm):
                     data_fim_intervalo > data_fim_leg or \
                     data_fim_intervalo < data_inicio or \
                     data_fim_intervalo < data_inicio_leg:
-                self.logger.error('- A data de fim do intervalo não está compreendida entre '
-                            'as datas de início e fim tanto da Legislatura quanto da '
-                            'própria Sessão Legislativa')
+                self.logger.error('A data de fim do intervalo ({}) não está compreendida entre '
+                            'as datas de início ({}) e fim ({}) tanto da Legislatura quanto da '
+                            'própria Sessão Legislativa ({} e {}).'
+                            .format(data_fim_intervalo, data_inicio_leg, data_fim_leg, data_inicio, data_fim))
                 raise ValidationError('A data de fim do intervalo deve estar compreendida entre '
                                       'as datas de início e fim tanto da Legislatura quanto da '
                                       'própria Sessão Legislativa')
@@ -433,7 +437,7 @@ class AutorForm(ModelForm):
 
     def valida_igualdade(self, texto1, texto2, msg):
         if texto1 != texto2:
-            self.logger.error('- Textos diferentes.')
+            self.logger.error('Textos diferentes. ("{}" e "{}")'.format(texto1, texto2))
             raise ValidationError(msg)
         return True
 
@@ -447,8 +451,8 @@ class AutorForm(ModelForm):
         cd = self.cleaned_data
 
         if 'action_user' not in cd or not cd['action_user']:
-            self.logger.error('- Não Informado se o Autor terá usuário '
-                        'vinculado para acesso ao Sistema.')
+            self.logger.error('Não Informado se o Autor terá usuário '
+                            'vinculado para acesso ao Sistema.')
             raise ValidationError(_('Informe se o Autor terá usuário '
                                     'vinculado para acesso ao Sistema.'))
 
@@ -458,9 +462,10 @@ class AutorForm(ModelForm):
                         self.instance.user,
                         get_user_model().USERNAME_FIELD) != cd['username']:
                     if 'status_user' not in cd or not cd['status_user']:
-                        self.logger.error('- Foi trocado ou removido o usuário deste Autor, '
-                                    'mas não foi informado como se deve proceder '
-                                    'com o usuário que está sendo desvinculado?')
+                        self.logger.error('Foi trocado ou removido o usuário deste Autor ({}), '
+                                        'mas não foi informado como se deve proceder '
+                                        'com o usuário que está sendo desvinculado? ({})'
+                                        .format(cd['username'], get_user_model().USERNAME_FIELD))
                         raise ValidationError(
                             _('Foi trocado ou removido o usuário deste Autor, '
                               'mas não foi informado como se deve proceder '
@@ -477,7 +482,7 @@ class AutorForm(ModelForm):
         if cd['action_user'] == 'A':
             param_username = {get_user_model().USERNAME_FIELD: cd['username']}
             if not User.objects.filter(**param_username).exists():
-                self.logger.error('- Não existe usuário com username "%s". ' % cd['username'])
+                self.logger.error('Não existe usuário com username "%s". ' % cd['username'])
                 raise ValidationError(
                     _('Não existe usuário com username "%s". '
                       'Para utilizar esse username você deve selecionar '
@@ -486,13 +491,13 @@ class AutorForm(ModelForm):
         if cd['action_user'] != 'N':
 
             if 'username' not in cd or not cd['username']:
-                self.logger.error('- Username não informado.')
+                self.logger.error('Username não informado.')
                 raise ValidationError(_('O username deve ser informado.'))
 
             param_username = {
                 'user__' + get_user_model().USERNAME_FIELD: cd['username']}
             if qs_autor.filter(**param_username).exists():
-                self.logger.error('Já existe um Autor para este usuário.')
+                self.logger.error('Já existe um Autor para este usuário ({}).'.format(cd['username']))
                 raise ValidationError(
                     _('Já existe um Autor para este usuário.'))
 
@@ -510,13 +515,13 @@ class AutorForm(ModelForm):
 
         if not tipo.content_type:
             if 'nome' not in cd or not cd['nome']:
-                self.logger.error('- Nome do Autor não informado.')
+                self.logger.error('Nome do Autor não informado.')
                 raise ValidationError(
                     _('O Nome do Autor deve ser informado.'))
         else:
             if 'autor_related' not in cd or not cd['autor_related']:
-                self.logger.error('- Registro de %s não escolhido para ser '
-                            'vinculado ao cadastro de Autor' % tipo.descricao)
+                self.logger.error('Registro de %s não escolhido para ser '
+                                'vinculado ao cadastro de Autor' % tipo.descricao)
                 raise ValidationError(
                     _('Um registro de %s deve ser escolhido para ser '
                       'vinculado ao cadastro de Autor') % tipo.descricao)
@@ -524,9 +529,9 @@ class AutorForm(ModelForm):
             if not tipo.content_type.model_class().objects.filter(
                     pk=cd['autor_related']).exists():
                 self.logger.error('O Registro definido (%s-%s) não está na base '
-                            'de %s.' % cd['autor_related'], cd['q'], tipo.descricao)
+                                'de %s.' % (cd['autor_related'], cd['q'], tipo.descricao))
                 raise ValidationError(
-                    _('- O Registro definido (%s-%s) não está na base de %s.'
+                    _('O Registro definido (%s-%s) não está na base de %s.'
                       ) % (cd['autor_related'], cd['q'], tipo.descricao))
 
             qs_autor_selected = qs_autor.filter(
@@ -534,8 +539,8 @@ class AutorForm(ModelForm):
                 content_type_id=cd['tipo'].content_type_id)
             if qs_autor_selected.exists():
                 autor = qs_autor_selected.first()
-                self.logger.error('- Já existe um autor Cadastrado para '
-                            '%s' % autor.autor_related)
+                self.logger.error('Já existe um autor Cadastrado para '
+                                '%s' % autor.autor_related)
                 raise ValidationError(
                     _('Já existe um autor Cadastrado para %s'
                       ) % autor.autor_related)
@@ -1045,12 +1050,12 @@ class ConfiguracoesAppForm(ModelForm):
         casa = CasaLegislativa.objects.first()
 
         if not casa:
-            self.logger.error('- Não há casa legislativa relacionada.')
-            raise ValidationError("Não há casa legislativa relacionada")
+            self.logger.error('Não há casa legislativa relacionada.')
+            raise ValidationError("Não há casa legislativa relacionada.")
 
         if (not bool(casa.logotipo) and mostrar_brasao_painel):
             self.logger.error('Não há logitipo configurado para esta '
-                        'Casa legislativa.')
+                            'CasaLegislativa ({}).'.format(casa))
             raise ValidationError("Não há logitipo configurado para esta "
                                   "Casa legislativa.")
 
@@ -1084,7 +1089,8 @@ class RecuperarSenhaForm(PasswordResetForm):
 
         if not email_existente:
             msg = 'Não existe nenhum usuário cadastrado com este e-mail.'
-            self.logger.error('- ' + msg)
+            self.logger.error('Não existe nenhum usuário cadastrado com este e-mail ({}).'
+                            .format(self.data['email']))
             raise ValidationError(msg)
 
         return self.cleaned_data
@@ -1151,7 +1157,7 @@ class AlterarSenhaForm(Form):
         new_password2 = data['new_password2']
 
         if new_password1 != new_password2:
-            self.logger.error("'Nova Senha' diferente de 'Confirmar Senha'")
+            self.logger.error("'Nova Senha' ({}) diferente de 'Confirmar Senha' ({})".format(new_password1, new_password2))
             raise ValidationError("'Nova Senha' diferente de 'Confirmar Senha'")
 
         # TODO: colocar mais regras como: tamanho mínimo,
@@ -1159,7 +1165,7 @@ class AlterarSenhaForm(Form):
         # TODO: senha atual igual a senha anterior, etc
 
         if len(new_password1) < 6:
-            self.logger.error('- A senha informada não tem o mínimo de 6 caracteres')
+            self.logger.error('A senha informada ({}) não tem o mínimo de 6 caracteres.'.format(new_password1))
             raise ValidationError("A senha informada deve ter no mínimo 6 caracteres")
 
         username = data['username']
@@ -1167,17 +1173,17 @@ class AlterarSenhaForm(Form):
         user = User.objects.get(username=username)
 
         if user.is_anonymous():
-            self.logger.error('- Não é possível alterar senha de usuário anônimo')
+            self.logger.error('Não é possível alterar senha de usuário anônimo ({}).'.format(username))
             raise ValidationError("Não é possível alterar senha de usuário anônimo")
 
         if not user.check_password(old_password):
-            self.logger.error('Senha atual informada não confere '
-                        'com a senha armazenada')
+            self.logger.error('Senha atual informada ({}) não confere '
+                            'com a senha armazenada.'.format(old_password))
             raise ValidationError("Senha atual informada não confere "
                                   "com a senha armazenada")
 
         if user.check_password(new_password1):
-            self.logger.error('Nova senha igual à senha anterior')
+            self.logger.error('Nova senha ({}) igual à senha anterior.'.format(new_password1))
             raise ValidationError("Nova senha não pode ser igual à senha anterior")
 
         return self.cleaned_data
