@@ -90,8 +90,8 @@ class AudienciaForm(forms.ModelForm):
             campos = [materia, tipo_materia, ano_materia]
             if campos.count(None) + campos.count('') < len(campos):
                 msg = _('Preencha todos os campos relacionados à Matéria Legislativa')
-                self.logger.error('Algum campo relacionado à MatériaLegislativa %s nº %s/%s 
-                                'não foi preenchido.' % (tipo_materia, materia, ano_materia))
+                self.logger.error('Algum campo relacionado à MatériaLegislativa %s nº %s/%s \
+                                não foi preenchido.' % (tipo_materia, materia, ano_materia))
                 raise ValidationError(msg)
 
         if not cleaned_data['numero']:

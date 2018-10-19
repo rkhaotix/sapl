@@ -1473,7 +1473,7 @@ class ResumoView(DetailView):
 class ResumoAtaView(ResumoView):
     template_name = 'sessao/resumo_ata.html'
     logger = logging.getLogger(__name__)
-    logger.info('- Gerando Resumo.')
+    logger.debug('Gerando Resumo.')
 
 
 class ExpedienteView(FormMixin, DetailView):
@@ -1497,7 +1497,8 @@ class ExpedienteView(FormMixin, DetailView):
         if 'apagar-expediente' in request.POST:
             ExpedienteSessao.objects.filter(
                 sessao_plenaria_id=self.object.id).delete()
-            self.logger.info('- Expediente deletado.')
+            self.logger.info('Expediente %s deletado.' %ExpedienteSessao.objects.get(
+                          sessao_plenaria_id=self.object.id))
             return self.form_valid(form)
 
         if form.is_valid():
@@ -1518,7 +1519,8 @@ class ExpedienteView(FormMixin, DetailView):
 
                 msg = _('Registro salvo com sucesso')
                 messages.add_message(self.request, messages.SUCCESS, msg)
-                self.logger.info('- Expediente salvo.')
+                self.logger.info('Expediente %s salvo.' %ExpedienteSessao.objects.get(
+                              sessao_plenaria_id=self.object.id))
 
             return self.form_valid(form)
         else:
@@ -1569,12 +1571,11 @@ class OcorrenciaSessaoView(FormMixin, DetailView):
     logger = logging.getLogger(__name__)
 
     def delete(self):
+        self.logger.info('OcorrenciaSessao %s deletada.')
         OcorrenciaSessao.objects.filter(sessao_plenaria=self.object).delete()
 
         msg = _('Registro deletado com sucesso')
         messages.add_message(self.request, messages.SUCCESS, msg)
-
-        self.logger.info('- Ocorrência de Sessão deletada.')
 
     def save(self,form):
         conteudo = form.cleaned_data['conteudo']
@@ -1589,7 +1590,8 @@ class OcorrenciaSessaoView(FormMixin, DetailView):
         msg = _('Registro salvo com sucesso')
         messages.add_message(self.request, messages.SUCCESS, msg)
 
-        self.logger.info('- Ocorrência de Sessão atualizada.')
+        self.logger.info('OcorrenciaSessao %s atualizada.' %OcorrenciaSessao.objects.get(
+                           sessao_plenaria=self.object))
 
     @method_decorator(permission_required('sessao.add_ocorrenciasessao'))
     def post(self, request, *args, **kwargs):
@@ -1779,7 +1781,8 @@ class VotacaoView(SessaoPermissionMixin):
                         request.POST['resultado_votacao'])
                     votacao.save()
                 except:
-                    self.logger.error('- Problemas ao salvar registro de votação.')
+                    self.logger.error('Problemas ao salvar RegistroVotacao da materia %s \
+                                       e da ordem %s.'%(materia_id, ordem_id))
                     return self.form_invalid(form)
                 else:
                     ordem = OrdemDia.objects.get(
@@ -1835,14 +1838,14 @@ class VotacaoNominalAbstract(SessaoPermissionMixin):
             if RegistroVotacao.objects.filter(ordem_id=ordem_id).exists():
                 msg = _('Esta matéria já foi votada!')
                 messages.add_message(request, messages.ERROR, msg)
-                self.logger.info('- Matéria já votada!')
+                self.logger.info('Matéria já votada!')
                 return HttpResponseRedirect(reverse(
                     'sapl.sessao:ordemdia_list', kwargs={'pk': kwargs['pk']}))
 
             try:
                 ordem = OrdemDia.objects.get(id=ordem_id)
             except ObjectDoesNotExist:
-                self.logger.error('- Objeto Ordem Dia não existe.')
+                self.logger.error('Objeto OrdemDia não existe.')
                 raise Http404()
 
             presentes = PresencaOrdemDia.objects.filter(
@@ -1873,7 +1876,7 @@ class VotacaoNominalAbstract(SessaoPermissionMixin):
             try:
                 expediente = ExpedienteMateria.objects.get(id=expediente_id)
             except ObjectDoesNotExist:
-                self.logger.error('- Objeto Expediente Matéria não existe.')
+                self.logger.error('Objeto ExpedienteMateria %s não existe.' %expediente_id)
                 raise Http404()
 
             presentes = SessaoPlenariaPresenca.objects.filter(
@@ -1912,7 +1915,7 @@ class VotacaoNominalAbstract(SessaoPermissionMixin):
             try:
                 materia_votacao = OrdemDia.objects.get(id=ordem_id)
             except ObjectDoesNotExist:
-                self.logger.error('- Objeto Matéria Votação não existe.')
+                self.logger.error('Objeto OrdemDia %s não existe.' %ordem_id)
                 raise Http404()
         elif self.expediente:
             expediente_id = kwargs['oid']
@@ -1920,7 +1923,7 @@ class VotacaoNominalAbstract(SessaoPermissionMixin):
                 materia_votacao = ExpedienteMateria.objects.get(
                     id=expediente_id)
             except ObjectDoesNotExist:
-                self.logger.error('- Objeto Matéria Votação não existe.')
+                self.logger.error('Objeto ExpedienteMateria %s não existe.' %expediente_id)
                 raise Http404()
 
         if 'cancelar-votacao' in request.POST:
@@ -2059,7 +2062,7 @@ class VotacaoNominalAbstract(SessaoPermissionMixin):
                     voto = voto_parlamentar.get(
                         parlamentar=parlamentar)
                 except ObjectDoesNotExist:
-                    self.logger.error('- Objeto Voto não existe.')
+                    self.logger.error('Objeto voto_parlamentar %s não existe.' %parlamentar)
                     yield [parlamentar, None]
                 else:
                     yield [parlamentar, voto.voto]
@@ -2090,7 +2093,7 @@ class VotacaoNominalEditAbstract(SessaoPermissionMixin):
             votacao = RegistroVotacao.objects.filter(ordem_id=ordem_id).last()
 
             if not ordem or not votacao:
-                self.logger.error('- Objeto Ordem Dia ou Votação não existe.')
+                self.logger.error('Objeto OrdemDia %s ou RegistroVotacao de OrdemDia não existe.' %ordem_id)
                 raise Http404()
 
             materia = ordem.materia
@@ -2105,7 +2108,7 @@ class VotacaoNominalEditAbstract(SessaoPermissionMixin):
                 expediente_id=expediente_id).last()
 
             if not expediente or not votacao:
-                self.logger.error('- Objeto Expediente ou Votação não existe.')
+                self.logger.error('Objeto ExpedienteMateria %s ou RegistroVotacao de ExpedienteMateria não existe.' %expediente_id)
                 raise Http404()
 
             materia = expediente.materia
@@ -2161,7 +2164,7 @@ class VotacaoNominalEditAbstract(SessaoPermissionMixin):
             try:
                 materia_votacao = OrdemDia.objects.get(id=ordem_id)
             except ObjectDoesNotExist:
-                self.logger.error('- Objeto Ordem Dia não existe.')
+                self.logger.error('Objeto OrdemDia %s não existe.' %ordem_id)
                 raise Http404()
 
         elif self.expediente:
@@ -2171,7 +2174,7 @@ class VotacaoNominalEditAbstract(SessaoPermissionMixin):
                 materia_votacao = ExpedienteMateria.objects.get(
                     id=expediente_id)
             except ObjectDoesNotExist:
-                self.logger.error('- Objeto Matéria Expediente não existe.')
+                self.logger.error('Objeto ExpedienteMateria %s não existe.' %expediente_id)
                 raise Http404()
 
         if(int(request.POST['anular_votacao']) == 1):
@@ -2760,7 +2763,7 @@ class PesquisarSessaoPlenariaView(FilterView):
         context['show_results'] = show_results_filter_set(
             self.request.GET.copy())
 
-        self.logger.info(' - Pesquisa de Sessões Plenárias.')
+        self.logger.info('Pesquisa de SessaoPlenaria.')
 
         return self.render_to_response(context)
 
@@ -2770,7 +2773,7 @@ class PesquisarPautaSessaoView(PesquisarSessaoPlenariaView):
     template_name = 'sessao/pauta_sessao_filter.html'
 
     logger = logging.getLogger(__name__)
-    logger.info(' - Pesquisa de Pauta de Sessão.')
+    logger.debug('Pesquisa de PautaSessao.')
 
     def get_context_data(self, **kwargs):
         context = super(PesquisarPautaSessaoView,

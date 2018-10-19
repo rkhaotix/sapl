@@ -664,8 +664,7 @@ class NumeracaoForm(ModelForm):
         except ObjectDoesNotExist:
             msg = _('A matéria a ser inclusa não existe no cadastro'
                     ' de matérias legislativas.')
-            self.logger.error("A MateriaLegislativa a ser inclusa (numero={}, ano={}. tipo={}) 
-                                " não existe no cadastro de matérias legislativas."
+            self.logger.error("A MateriaLegislativa a ser inclusa (numero={}, ano={}. tipo={}) não existe no cadastro de matérias legislativas."
                                 .format(self.cleaned_data['numero_materia'], 
                                 self.cleaned_data['ano_materia'], self.cleaned_data['tipo_materia']))
             raise ValidationError(msg)

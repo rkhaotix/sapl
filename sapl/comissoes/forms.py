@@ -316,9 +316,9 @@ class ComissaoForm(forms.ModelForm):
             self.cleaned_data['data_final_prevista_temp'] <
                 self.cleaned_data['data_instalacao_temp']):
                 msg = _('Data Prevista para Término não pode ser menor que a de Instalação.')
+                self.logger.error('Data Prevista para Término ({}) não pode ser menor que a de Instalação ({}).'
                         .format(self.cleaned_data['data_final_prevista_temp'], self.cleaned_data['data_instalacao_temp']))
-                self.logger.error('Data Prevista para Término não pode ser menor que a de Instalação.')
-                raise ValidationError('Data Prevista para Término ({}) não pode ser menor que a de Instalação ({}).'
+                raise ValidationError(msg)
         if (self.cleaned_data['data_prorrogada_temp'] and self.cleaned_data['data_instalacao_temp'] and
             self.cleaned_data['data_prorrogada_temp'] <
                 self.cleaned_data['data_instalacao_temp']):

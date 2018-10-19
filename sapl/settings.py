@@ -23,6 +23,7 @@ from .temp_suppress_crispy_form_warnings import \
     SUPRESS_CRISPY_FORM_WARNINGS_LOGGING
 
 HOST = None
+SITE_ID = 1
 
 BASE_DIR = Path(__file__).ancestor(1)
 PROJECT_DIR = Path(__file__).ancestor(2)
@@ -137,8 +138,6 @@ MIDDLEWARE_CLASSES = (
     'sapl.middleware.SiteMiddleware',
 )
 
-DEFAULT_SITE_ID = 1
-SITE_ID = 1
 
 CACHES = {
     'default': {
@@ -304,21 +303,18 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s ' + str(HOST) + ' %(filename)s %(funcName)s %(lineno)d %(name)s %(message)s'
+            'format': '%(levelname)s %(asctime)s ' + str(HOST) + ' %(filename)s %(funcName)s %(lineno)d %(name)s - %(message)s'
         },
         'simple': {
-            'format': '%(levelname)s %(asctime)s %(message)s'
+            'format': '%(levelname)s %(asctime)s - %(message)s'
         },
     },
-#    'filters': {
-#        # TODO Ver depois !
-#        'require_debug_false': {
-#            '()': 'django.utils.log.RequireDebugFalse'
-#        },
-#        'site_filter': {
-#                '()': 'sapl.logging_filters.SiteFilter',
-#        },
-#    },
+   'filters': {
+       # TODO Ver depois !
+       'require_debug_false': {
+           '()': 'django.utils.log.RequireDebugFalse'
+       },
+   },
     'handlers': {
         'console': {
             'level': 'INFO',

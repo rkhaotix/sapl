@@ -1109,7 +1109,7 @@ class RelatoriaCrud(MasterDetailCrud):
                 self.logger.error("Objeto Comissão de pk={} não encontrado.".format(context['form'].initial['comissao']))
                 pass
             else:                
-                self.logger.info("Objeto Comissao de pk={} obtido com sucesso.".format(context['form'].initial['comissao'])
+                self.logger.info("Objeto Comissao de pk={} obtido com sucesso.".format(context['form'].initial['comissao']))
                 composicao = comissao.composicao_set.order_by(
                     '-periodo__data_inicio').first()
                 participacao = Participacao.objects.filter(
@@ -1227,7 +1227,7 @@ class TramitacaoCrud(MasterDetailCrud):
 
             try:
                 self.logger.debug("Tentando enviar Tramitacao (sender={}, post={}, request={}"
-                                        .format(Tramitacao, self.object, self.request)).
+                                        .format(Tramitacao, self.object, self.request))
                 tramitacao_signal.send(sender=Tramitacao,
                                        post=self.object,
                                        request=self.request)
