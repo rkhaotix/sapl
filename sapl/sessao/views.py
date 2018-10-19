@@ -1571,7 +1571,8 @@ class OcorrenciaSessaoView(FormMixin, DetailView):
     logger = logging.getLogger(__name__)
 
     def delete(self):
-        self.logger.info('OcorrenciaSessao %s deletada.')
+        self.logger.info('OcorrenciaSessao %s deletada.'%OcorrenciaSessao.objects.get(
+                           sessao_plenaria=self.object))
         OcorrenciaSessao.objects.filter(sessao_plenaria=self.object).delete()
 
         msg = _('Registro deletado com sucesso')
@@ -1845,7 +1846,7 @@ class VotacaoNominalAbstract(SessaoPermissionMixin):
             try:
                 ordem = OrdemDia.objects.get(id=ordem_id)
             except ObjectDoesNotExist:
-                self.logger.error('Objeto OrdemDia não existe.')
+                self.logger.error('Objeto OrdemDia (pk={}) não existe.'.format(ordem_id))
                 raise Http404()
 
             presentes = PresencaOrdemDia.objects.filter(
@@ -2763,7 +2764,7 @@ class PesquisarSessaoPlenariaView(FilterView):
         context['show_results'] = show_results_filter_set(
             self.request.GET.copy())
 
-        self.logger.info('Pesquisa de SessaoPlenaria.')
+        self.logger.debug('Pesquisa de SessaoPlenaria.')
 
         return self.render_to_response(context)
 

@@ -23,7 +23,7 @@ from .temp_suppress_crispy_form_warnings import \
     SUPRESS_CRISPY_FORM_WARNINGS_LOGGING
 
 HOST = None
-SITE_ID = 1
+# SITE_ID = 1
 
 BASE_DIR = Path(__file__).ancestor(1)
 PROJECT_DIR = Path(__file__).ancestor(2)
@@ -314,7 +314,7 @@ LOGGING = {
        'require_debug_false': {
            '()': 'django.utils.log.RequireDebugFalse'
        },
-   },
+    },
     'handlers': {
         'console': {
             'level': 'INFO',
@@ -331,7 +331,7 @@ LOGGING = {
         },
     },
     'loggers': {
-        'django.request': {
+        'sapl': {
             'handlers': ['applogfile'],
             'level': 'INFO',
             'propagate': True,

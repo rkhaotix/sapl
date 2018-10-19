@@ -11,5 +11,5 @@ class SiteMiddleware(object):
             current_site = Site.objects.get(id=1)
 
         request.current_site = current_site
-        settings.host = request.get_host()
-        
+        settings.HOST = request.get_host()
+
