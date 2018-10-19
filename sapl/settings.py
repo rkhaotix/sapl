@@ -13,6 +13,7 @@ Quick-start development settings - unsuitable for production
 See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 
 """
+import socket
 
 from decouple import config
 from dj_database_url import parse as db_url
@@ -22,8 +23,8 @@ from unipath import Path
 from .temp_suppress_crispy_form_warnings import \
     SUPRESS_CRISPY_FORM_WARNINGS_LOGGING
 
-HOST = None
-# SITE_ID = 1
+
+IP = socket.gethostbyname_ex(socket.gethostname())[2]
 
 BASE_DIR = Path(__file__).ancestor(1)
 PROJECT_DIR = Path(__file__).ancestor(2)
@@ -75,7 +76,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',
 
     # more
     'django_extensions',
@@ -134,8 +134,6 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     # 'speedinfo.middleware.ProfilerMiddleware', # Bug na versão 1.9
-
-    'sapl.middleware.SiteMiddleware',
 )
 
 
@@ -298,12 +296,14 @@ SASS_PROCESSOR_INCLUDE_DIRS = (BOWER_COMPONENTS_ROOT.child(
 # suprime texto de ajuda default do django-filter
 FILTERS_HELP_TEXT_FILTER = False
 
+ip = str(IP).replace("[","").replace("]","").replace("'","")
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s ' + str(HOST) + ' %(filename)s %(funcName)s %(lineno)d %(name)s - %(message)s'
+            'format': '%(levelname)s %(asctime)s IP:' + ip + ' %(filename)s %(funcName)s %(lineno)d %(name)s - %(message)s'
         },
         'simple': {
             'format': '%(levelname)s %(asctime)s - %(message)s'
